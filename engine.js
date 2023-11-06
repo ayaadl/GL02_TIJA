@@ -1,6 +1,6 @@
 var Engine = {
 	check: function(){
-	console.log("Engine Ready !)
+	console.log("Engine Ready !")
 	return true
 	}
 }
