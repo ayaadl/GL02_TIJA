@@ -1,15 +1,10 @@
 const fs = require('fs');
 const colors = require('colors');
 const CRUParser = require('./CRUParser.js');
-
 const vg = require('vega');
 const vegalite = require('vega-lite');
-
 const cli = require("@caporal/core").default;
 
-
-//TODO dans ce fichier, il faut créer une commande par spécification
-// on peut laisser la fonction readme 
 
 cli
 	.version('cru-parser-cli')
@@ -54,10 +49,10 @@ cli
 		});
 	})
 
-	// search
-	.command('search', 'Free text search on POIs\' name')
+	// search_room || SPEC1 
+	.command('search_room', 'Search rooms of a specific course ')
 	.argument('<file>', 'The CRU file to search')
-	.argument('<needle>', 'The text to look for in POI\'s names')
+	.argument('<needle>', 'The text to look for in course\'s names')
 	.action(({args, options, logger}) => {
 		fs.readFile(args.file, 'utf8', function (err,data) {
 		if (err) {
@@ -68,20 +63,51 @@ cli
 		analyzer.parse(data);
 		
 		if(analyzer.errorCount === 0){
-		
-			// Filtre à ajouter //
-			let poiAFiltrer = analyzer.parsedPOI;
-			poiAFiltrer = poiAFiltrer.filter(p => p.name.match(args.needle, 'i'));
-			logger.info("%s", JSON.stringify(poiAFiltrer, null, 2));
-			// Filtre à ajouter //
+			let courseSearched = analyzer.parsedCourse;
+			courseSearched = courseSearched.filter(p => p.getCode().match(args.needle, 'i'));
 			
+			if(courseSearched.length > 0 ){ 
+				let formattedTimeslots = courseSearched[0].timeslots.map(timeslot => {
+					let { room, schedule } = timeslot;
+					let day = schedule.day;
+					switch (day) {
+					case "L":
+						day = "Monday"
+						break;
+					case "MA":
+						day = "Tuesday"
+						break;
+					case "ME":
+						day = "Wednesday"
+						break;
+					case "J":
+						day = "Thursday"
+						break;
+					case "V":
+						day = "Friday"
+						break;
+					case "S":
+						day = "Saturday"
+						break;
+					case "D":
+						day = "Sunday"
+						break;
+					default:
+						day = "undefined"
+					}
+					return `Room : ${room} | Schedule : ${day}, from ${schedule.start} to ${schedule.end}`;
+				});				
+				logger.info(`The course takes place on these timselots : \n ${formattedTimeslots.join(' \n ')}`.yellow);
+
+			}else{
+				logger.info("The course does not exist or does not have a timeslot".red)
+			}
 		}else{
 			logger.info("The .cru file contains error".red);
 		}
 		
 		});
 	})
-
 
 	// average
 	.command('average', 'Compute the average note of each POI')

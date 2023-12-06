@@ -6,6 +6,17 @@ var Course = function(code, timeslots){
 	this.timeslots = timeslots
 }
 
+// Fonctions qui n'étaient pas dans le CDC 
+Course.prototype.getCode = function(){
+	return this.course_code;
+};
+
+Course.prototype.getTimeslots = function(){
+	return this.timeslots;
+};
+
+//
+
 Course.prototype.create = function(){
 	//TODO
 };

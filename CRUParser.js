@@ -1,4 +1,6 @@
 var Course = require('./Course');
+var Schedule = require('./Schedule');
+var Timeslot = require('./Timeslot');
 
 /*
 Exemple de format CRU 
@@ -13,6 +15,12 @@ Exemple de format CRU
 var CRUParser = function(sTokenize, sParsedSymb){
 	// The list of Course parsed from the input file.
 	this.parsedCourse = [];
+
+	// TODO Check utilité de ces deux lignes
+	this.parsedSchedule = [];
+	this.parsedTimeslot = [];
+	//
+
 	this.symb = ["+",",","=", "P","H","S", "//"];
 	this.showTokenize = sTokenize;
 	this.showParsedSymbols = sParsedSymb;
@@ -92,24 +100,32 @@ CRUParser.prototype.expect = function(s, input){
 // PARSER RULES 
 // ##################################
 
-
 // <course> = +(<course>)
 CRUParser.prototype.listCourse = function(input){
 	this.course(input);
 }
-
-//TODO revoir la fonction en mettant d'abord le course code puis en faisant des itérations d'ajout de codes 
 
 //<course> = "+" <name> <eol> <list_timeslot> <eol>
 CRUParser.prototype.course = function(input){
 	if(this.check("+", input)){
 		this.expect("+", input);
 		var args = this.body(input);
+
 		var p = new Course(args.course_code, args.list_timeslot.timeslots);
+
 		this.parsedCourse.push(p);
 		if(input.length > 0){
 			this.course(input);
 		}
+
+		/* A utiliser si besoin d'affichage
+		console.log("######################")
+		console.log(this.parsedCourse)
+		console.log(this.parsedSchedule)
+		console.log(this.parsedTimeslot)
+		*/
+		
+
 		return true;
 	}else{
 		return false;
@@ -120,12 +136,6 @@ CRUParser.prototype.course = function(input){
 CRUParser.prototype.body = function(input){
 	var course_code = this.course_code(input);
 	var list_timeslot = this.timeslot(input);
-
-	//test pour visualiser les résultats de parseur 
-	console.log('Voilà le course code :');
-	console.log(course_code);
-	console.log("Voila la timeslot : ");
-	console.log(list_timeslot);
 
 	return {course_code, list_timeslot};
 }
@@ -142,15 +152,17 @@ CRUParser.prototype.course_code = function(input){
 
 // <list_timeslot> = liste des séances 
 CRUParser.prototype.timeslot = function(input){
-	var timeslots = [];
+	timeslots = [];
 	do{
 		var type = this.type(input);
 		var capacity = this.capacity(input);
-		var daytime = this.daytime(input);
+		var schedule = this.schedule(input);
 		var subgroup = this.subgroup(input);
 		var room = this.room(input);
-		next = this.next(input);
-		timeslots.push({type: type, capacity: capacity, daytime: daytime, subgroup: subgroup, room: room});
+		var next = this.next(input);
+		var t = new Timeslot(type, capacity, schedule, subgroup, room);
+		this.parsedTimeslot.push(t);
+		timeslots.push(t);
 	} while(next != "+" && input.length > 0);
 
 	return {timeslots};
@@ -181,15 +193,17 @@ CRUParser.prototype.capacity = function(input){
 	}
 } 
 
-// <daytime> = ‘H=’ <day> WSP <hour> 
-CRUParser.prototype.daytime = function(input){
+// <schedule> = ‘H=’ <day> WSP <hour> 
+CRUParser.prototype.schedule = function(input){
 	this.expect("H", input);
 	var curS = this.next(input);
 
 	if(matched = curS.match(/(L|MA|ME|J|V|S|D) \d{1,2}:00-\d{1,2}:00/)){
-		return matched[0];
+		var s = new Schedule(matched[0].split(" ")[0], matched[0].split(" ")[1].split("-")[0], matched[0].split(" ")[1].split("-")[1]);
+		this.parsedSchedule.push(s);
+		return s;
 	}else{
-		this.errMsg("Invalid daytime", input);
+		this.errMsg("Invalid schedule", input);
 	}
 } 
 
