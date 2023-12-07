@@ -31,6 +31,15 @@ export : Export an iCalendar file between two given dates for a specific teachin
 room_occupancy : Generate a visualization for the rooms occupancy rates export a Vega-lite chart
 room_capacities :  Generate a chart of room types by capacity
 
+<command> : searchAV
+-d, --day <day> : The day of available rooms
+-e, --timeE <timeE> : The end time of available rooms
+-s, --timeS <timeS> : The start time of available rooms
+
+"example : node .\RoomManagementCLI.js searchAV .\sample.cru -d V -s 9:00 -e 12:00"
+
+
+
 Optional parameters have to be before the mandatory file parameter.
 
 ### Version : 
@@ -41,13 +50,12 @@ Optional parameters have to be before the mandatory file parameter.
 - Création des classes Schedule, Timeslot et Course (Course étant une collection de Timeslot avec un code cours en plus)
 
 
-TODO :
-- Compléter les fonctions des différentes classes (Schedule, Timeslot, Course)
-- Ajout des fonctionnalités/command de l'application via SRURoomManagementCLI.js 
-- Ajout de tests unitaires
 
 
 ### Liste des contributeurs
 A. ABDALA (aya.abdala@utt.fr)
+B. ILYASS BOUKHO (ilyass.boukho@utt.fr)
+C.Thomas MARTINEZ (thomas.martinez@utt.fr);
+D.Jianghao LIU (jianghao.liu@utt.fr);
 
 
