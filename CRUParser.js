@@ -13,10 +13,8 @@ Exemple de format CRU
 
 // CRUParser
 var CRUParser = function(sTokenize, sParsedSymb){
-	// The list of Course parsed from the input file.
+	// The list of Course, Schedule and  Timeslot parsed from the input file.
 	this.parsedCourse = [];
-
-	// TODO Check utilité de ces deux lignes
 	this.parsedSchedule = [];
 	this.parsedTimeslot = [];
 	//
@@ -109,8 +107,8 @@ CRUParser.prototype.listCourse = function(input){
 CRUParser.prototype.course = function(input){
 	if(this.check("+", input)){
 		this.expect("+", input);
-		var args = this.body(input);
 
+		var args = this.body(input);
 		var p = new Course(args.course_code, args.list_timeslot.timeslots);
 
 		this.parsedCourse.push(p);
@@ -118,7 +116,7 @@ CRUParser.prototype.course = function(input){
 			this.course(input);
 		}
 
-		/* A utiliser si besoin d'affichage
+		/* A utiliser en cas de besoin de test d'affichage 
 		console.log("######################")
 		console.log(this.parsedCourse)
 		console.log(this.parsedSchedule)
@@ -152,19 +150,22 @@ CRUParser.prototype.course_code = function(input){
 
 // <list_timeslot> = liste des séances 
 CRUParser.prototype.timeslot = function(input){
-	timeslots = [];
+	var timeslots = [];
 	do{
 		var type = this.type(input);
 		var capacity = this.capacity(input);
 		var schedule = this.schedule(input);
 		var subgroup = this.subgroup(input);
 		var room = this.room(input);
-		var next = this.next(input);
+
+		// to get rid of '//' signs at the end of timeslot line 
+		this.next(input);
+
 		var t = new Timeslot(type, capacity, schedule, subgroup, room);
 		this.parsedTimeslot.push(t);
 		timeslots.push(t);
-	} while(next != "+" && input.length > 0);
-
+	} while(input[0] !== "+" && input.length > 0);
+	
 	return {timeslots};
 }
 
@@ -222,6 +223,7 @@ CRUParser.prototype.subgroup = function(input){
 CRUParser.prototype.room = function(input){
 	this.expect("S", input);
 	var curS = this.next(input);
+
 	if(matched = curS.match(/[A-Z0-9]{3}/)){
 		return matched[0];
 	}else{
