@@ -110,9 +110,9 @@ cli
 	// check available rooms || SPEC4
 cli.command('searchAV', 'Search available rooms for a specific day and time')
 	.argument('<file>', 'The CRU file to search')
-	.option('-d, --journey <day>', 'The day of available rooms')
-	.option('-ts, --timeS <timeS>', 'The start time of available rooms')
-	.option('-te, --timeE <timeE>', 'The end time of available rooms')
+	.option('-d, --day <day>', 'The day of available rooms')
+	.option('-s, --timeS <timeS>', 'The start time of available rooms')
+	.option('-e, --timeE <timeE>', 'The end time of available rooms')
 	.action(({ args, options, logger }) => {
 		fs.readFile(args.file, 'utf8', function (err, data) {
 			if (err) {
