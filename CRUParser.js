@@ -115,7 +115,6 @@ CRUParser.prototype.course = function(input){
 		if(input.length > 0){
 			this.course(input);
 		}
-
 		/* A utiliser en cas de besoin de test d'affichage 
 		console.log("######################")
 		console.log(this.parsedCourse)
@@ -123,7 +122,6 @@ CRUParser.prototype.course = function(input){
 		console.log(this.parsedTimeslot)
 		*/
 		
-
 		return true;
 	}else{
 		return false;
@@ -224,7 +222,7 @@ CRUParser.prototype.room = function(input){
 	this.expect("S", input);
 	var curS = this.next(input);
 
-	if(matched = curS.match(/[A-Z0-9]{3}/)){
+	if(matched = curS.match(/[A-Z0-9]{4}/)){
 		return matched[0];
 	}else{
 		this.errMsg("Invalid room", input);

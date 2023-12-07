@@ -130,12 +130,9 @@ cli
 		
 		});
 	})
-	
+
 	// room_occupancy || SPEC6
-	// TODO modifier pour faire la occupancy rate - mal compris 
-	// Modification uniquement au niveau des data pas besoin de toucher au reste, juste renommer les variables dans les charts
 	.command('room_occupancy', 'Generate a visualization for the rooms occupancy rates export a Vega-lite chart')
-	.alias('avgOccupancy')
 	.argument('<file>', 'The Cru file to use')
 	.action(({args, options, logger}) => {
 		fs.readFile(args.file, 'utf8', function (err,data) {
@@ -145,17 +142,34 @@ cli
   
 		analyzer = new CRUParser();
 		analyzer.parse(data);
+		if(analyzer.errorCount === 0){	
 
-		if(analyzer.errorCount === 0){
-			var values = analyzer.parsedTimeslot.map(function(timeslot) {
-				return {
-				capacity: timeslot.capacity,
-				room: timeslot.room,
-				day: timeslot.schedule.day
-				};
+			let occupancy = {};
+			analyzer.parsedTimeslot.forEach(timeslot => {
+				let room = timeslot.room;
+				let day = timeslot.schedule.day;
+				let startTime = new Date('2023-01-01 ' + timeslot.schedule.start);
+				let endTime = new Date('2023-01-01 ' + timeslot.schedule.end);
+				let timeDifference = (endTime - startTime) / (1000 * 60 * 60);
+				if (!occupancy[room]) {
+					occupancy[room] = {};
+				}
+				if (!occupancy[room][day]) {
+					occupancy[room][day] = 0;
+				}
+				occupancy[room][day] += timeDifference;
 			});
-	
 
+			let values = []
+		 	for (let room in occupancy) {
+				for (let day in occupancy[room]) {
+					values.push({
+						room: room,
+						day: day,
+						occupancy: (occupancy[room][day]/12)*100
+					});
+				}
+			}
 			var occupancyChart = {
 				"$schema": "https://vega.github.io/schema/vega-lite/v5.json",
 				"data": {
@@ -163,10 +177,10 @@ cli
 				},
 				"mark": "bar",
 				"encoding": {
-					"x": {"field": "day", "type": "ordinal", "axis": {"title": "Day"}},
-					"y": {"field": "capacity", "type": "quantitative", "aggregate": "average", "axis": {"title": "Average occupancy rates"}},
-					"color": {"field": "room", "type": "nominal", "legend": {"title": "Room"}},
-					"column": {"field": "room", "type": "nominal", "title": "Room"}
+					"x": {"field": "day", "type": "ordinal", "axis": {"title": "Days"}},
+					"y": {"field": "occupancy", "type": "quantitative", "axis": {"title": "Occupancy rates per day"},  "scale": {"domain": [0, 100]}},
+					"color": {"field": "room", "type": "nominal", "legend": {"title": "Rooms"}},
+					"column": {"field": "room", "type": "nominal", "title": "Rooms"}
 				}		  
 			}
 			  		
@@ -177,10 +191,10 @@ cli
 			var view = new vg.View(runtime).renderer('svg').run();
 			var mySvg = view.toSVG();
 			mySvg.then(function(res){
-				fs.writeFileSync("./result.svg", res)
+				fs.writeFileSync("./resultOccupancy.svg", res)
 				view.finalize();
-				logger.info("%s", JSON.stringify(myChart, null, 2));
-				logger.info("Chart output : ./result.svg");
+				//logger.info("%s", JSON.stringify(myChart, null, 2));
+				logger.info("Chart output : ./resultOccupancy.svg");
 			});
 			
 			/* Canvas version */
@@ -188,10 +202,10 @@ cli
 			var view = new vg.View(runtime).renderer('canvas').background("#FFF").run();
 			var myCanvas = view.toCanvas();
 			myCanvas.then(function(res){
-				fs.writeFileSync("./result.png", res.toBuffer());
+				fs.writeFileSync("./resultOccupancy.png", res.toBuffer());
 				view.finalize();
-				logger.info(myChart);
-				logger.info("Chart output : ./result.png");
+				//logger.info(myChart);
+				logger.info("Chart output : ./resultOccupancy.png");
 			})	
 			
 		}else{
@@ -201,8 +215,7 @@ cli
 		});
 	})
 
-	// room_capacities || SPEC6
-	//TODO amélioration : gestion de l'écart des axes d'abscices et ordonnées 
+	// room_capacities || SPEC7
 	.command('room_capacities', 'Generate a chart of room types by capacity')
 	.alias('types')
 	.argument('<file>', 'The CRU file to use')
@@ -214,6 +227,7 @@ cli
   
 		analyzer = new CRUParser();
 		analyzer.parse(data);
+
 
 		if(analyzer.errorCount === 0){
 			var values = analyzer.parsedTimeslot.map(function(timeslot) {
@@ -244,7 +258,7 @@ cli
 			mySvg.then(function(res){
 				fs.writeFileSync("./result_roomsByCapacity.svg", res)
 				view.finalize();
-				logger.info("%s", JSON.stringify(myChart, null, 2));
+				//logger.info("%s", JSON.stringify(myChart, null, 2));
 				logger.info("Chart output : ./result_roomsByCapacity.svg");
 			});
 			
@@ -255,7 +269,7 @@ cli
 			myCanvas.then(function(res){
 				fs.writeFileSync("./result_roomsByCapacity.png", res.toBuffer());
 				view.finalize();
-				logger.info(myChart);
+				//logger.info(myChart);
 				logger.info("Chart output : ./result_roomsByCapacity.png");
 			})	
 			
