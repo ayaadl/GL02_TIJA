@@ -3,10 +3,10 @@ var Schedule = require('./Schedule');
 var Timeslot = require('./Timeslot');
 
 /*
-Exemple de format CRU 
+Exemple de format CRU
 
 +ME05
-1,C1,P=62,H=ME 12:00-16:00,F1,S=B101// 
+1,C1,P=62,H=ME 12:00-16:00,F1,S=B101//
 1,D1,P=64,H=ME 16:00-20:00,F1,S=B101//
 
 */
@@ -26,7 +26,7 @@ var CRUParser = function(sTokenize, sParsedSymb){
 }
 
 // ##################################
-// PARSER PROCEDURES 
+// PARSER PROCEDURES
 // ##################################
 
 // tokenize : tranform the data input into a list
@@ -77,7 +77,7 @@ CRUParser.prototype.accept = function(s){
 // check : check whether the arg elt is on the head of the list
 CRUParser.prototype.check = function(s, input){
 	if(this.accept(input[0]) == this.accept(s)){
-		return true;	
+		return true;
 	}
 	return false;
 }
@@ -95,7 +95,7 @@ CRUParser.prototype.expect = function(s, input){
 
 
 // ##################################
-// PARSER RULES 
+// PARSER RULES
 // ##################################
 
 // <course> = +(<course>)
@@ -115,13 +115,13 @@ CRUParser.prototype.course = function(input){
 		if(input.length > 0){
 			this.course(input);
 		}
-		/* A utiliser en cas de besoin de test d'affichage 
+		/* A utiliser en cas de besoin de test d'affichage
 		console.log("######################")
 		console.log(this.parsedCourse)
 		console.log(this.parsedSchedule)
 		console.log(this.parsedTimeslot)
 		*/
-		
+
 		return true;
 	}else{
 		return false;
@@ -136,7 +136,7 @@ CRUParser.prototype.body = function(input){
 	return {course_code, list_timeslot};
 }
 
-// <course_code> = code  
+// <course_code> = code
 CRUParser.prototype.course_code = function(input){
 	var curS = this.next(input);
 	if(matched = curS.match(/[A-Z0-9]{4}/)){
@@ -144,9 +144,9 @@ CRUParser.prototype.course_code = function(input){
 	}else{
 		this.errMsg("Invalid course code", input);
 	}
-} 
+}
 
-// <list_timeslot> = liste des séances 
+// <list_timeslot> = liste des séances
 CRUParser.prototype.timeslot = function(input){
 	var timeslots = [];
 	do{
@@ -156,14 +156,14 @@ CRUParser.prototype.timeslot = function(input){
 		var subgroup = this.subgroup(input);
 		var room = this.room(input);
 
-		// to get rid of '//' signs at the end of timeslot line 
+		// to get rid of '//' signs at the end of timeslot line
 		this.next(input);
 
 		var t = new Timeslot(type, capacity, schedule, subgroup, room);
 		this.parsedTimeslot.push(t);
 		timeslots.push(t);
 	} while(input[0] !== "+" && input.length > 0);
-	
+
 	return {timeslots};
 }
 
@@ -178,7 +178,7 @@ CRUParser.prototype.type = function(input){
 	}else{
 		this.errMsg("Invalid type", input);
 	}
-} 
+}
 
 // <capacity> = 'P=' 1*DIGIT
 CRUParser.prototype.capacity = function(input){
@@ -190,9 +190,34 @@ CRUParser.prototype.capacity = function(input){
 	}else{
 		this.errMsg("Invalid capacity", input);
 	}
-} 
+}
+// Fonction pour rechercher les salles disponibles
+CRUParser.prototype.searchAvailableRooms = function(day, timeS,timeE) {
+	function formMMDD(item,day ,timeS,timeE){
+		let schedule = item.getSchedule();
+		var timestart= schedule.start.padStart(5,'0');
 
-// <schedule> = ‘H=’ <day> WSP <hour> 
+		return (schedule.day === day && (timestart > timeE || schedule.end < timeS))||(schedule.day != day)
+	}
+
+	const uniqueRoomNames = new Set();
+
+	const availableRooms = this.parsedTimeslot
+		.filter(item => formMMDD(item,day,timeS,timeE))
+		.map(item => {
+			const roomName = item.getRoomName();
+			if (!uniqueRoomNames.has(roomName)) {
+				uniqueRoomNames.add(roomName); // add room name to SET
+				return roomName;
+			}
+			return null; // repeated values are null,will be delete after
+		})
+		.filter(roomName => roomName !== null);
+
+	return availableRooms;
+}
+
+// <schedule> = ‘H=’ <day> WSP <hour>
 CRUParser.prototype.schedule = function(input){
 	this.expect("H", input);
 	var curS = this.next(input);
@@ -201,10 +226,10 @@ CRUParser.prototype.schedule = function(input){
 		var s = new Schedule(matched[0].split(" ")[0], matched[0].split(" ")[1].split("-")[0], matched[0].split(" ")[1].split("-")[1]);
 		this.parsedSchedule.push(s);
 		return s;
-	}else {
+	}else{
 		this.errMsg("Invalid schedule", input);
-	  }
 	}
+}
 
 // <subgroup> = ALPHA DIGIT
 CRUParser.prototype.subgroup = function(input){
@@ -217,16 +242,6 @@ CRUParser.prototype.subgroup = function(input){
 	}
 }
 
-
-// Fonction pour rechercher les salles disponibles
-CRUParser.prototype.searchAvailableRooms = function(day, timeS,timeE) {
-	const availableRooms = this.parsedTimeslot
-		.filter(item => item.getSchedule().day === day && item.getSchedule().start === timeS && item.getSchedule().end === timeE)
-		.map(item => item.getRoomName());
-
-	return availableRooms;
-}
-
 // <room> = ‘S=’ ALPHA 3DIGIT
 CRUParser.prototype.room = function(input){
 	this.expect("S", input);
@@ -237,6 +252,9 @@ CRUParser.prototype.room = function(input){
 	}else{
 		this.errMsg("Invalid room", input);
 	}
-} 
+}
 
 module.exports = CRUParser;
+
+
+

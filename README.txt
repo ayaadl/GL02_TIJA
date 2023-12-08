@@ -27,6 +27,7 @@ check : Check if <file> is a valid CRU file
 readme : Display the README.txt file
 search_room : Search rooms of a specific course
 getMaximumCapacityRoom : Display the maximum capacity of a room
+searchFreeSlot :  Display the slots available for a room
 searchAV : Search available rooms for a specific day and time
 export : Export an iCalendar file between two given dates for a specific teaching
 room_occupancy : Generate a visualization for the rooms occupancy rates export a Vega-lite chart
