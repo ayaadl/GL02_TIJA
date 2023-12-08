@@ -166,21 +166,8 @@ cli
                 return ts.room == args.room
             })
 			//sort timeslots by time
-            dayTimeSlots = dayTimeSlots.sort((ts1,ts2) => {
-				let schedule1 = ts1.schedule;
-				let schedule2 = ts2.schedule;
-				if(days.indexOf(schedule1.day) - days.indexOf(schedule2.day) == 0){
-					console.log("1",schedule1.start, schedule2.start)
-					if(schedule1.start > schedule2.start){
-						return 1
-					}else if(schedule1.start < schedule2.start){
-						return -1
-					}else{
-						return 0
-					}
-				}else{
-					return days.indexOf(schedule1.day) - days.indexOf(schedule2.day)
-				}
+            .sort((ts1,ts2) => {
+				return ts1.compareSchedule(ts2);
                 
             })
 
