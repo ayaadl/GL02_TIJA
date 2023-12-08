@@ -147,7 +147,7 @@ cli
 		}
 	  });
 	})
-
+	//Display the slots available for a room||SPEC 3
 	.command("searchFreeSlot", "Display the slots available for a room")
     .alias("searchFS")
     .argument("<file>", "The Cru file to use")
@@ -202,8 +202,12 @@ cli
 
 			})
 
-			console.log(JSON.stringify(resSlots))
-			return logger.info(`The room ${args.room} is free on these timselots : \n ${resSlots.join(' \n ')}`.yellow);
+			resSlots = Array.from(new Set(resSlots));
+
+			// Format each object before printing
+			const formattedSlots = resSlots.map(slot => `${slot.schedule.day} ${slot.schedule.start}-${slot.schedule.end}`);
+
+			logger.info(`The room ${args.room} is free on these time slots: \n${formattedSlots.join('\n')}`.yellow);
           } else {
             logger.info("The .cru file contains error".red);
           }
