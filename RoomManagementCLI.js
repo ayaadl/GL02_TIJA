@@ -107,6 +107,42 @@ cli
 		
 		});
 	})
+	//  Display the maximum capacity of a room||SPEC 2
+	.command("getMaximumCapacityRoom", "Display the maximum capacity of a room")
+	.alias("getMaxCapRoom")
+	.argument("<file>", "The Cru file to use")
+	.argument("<room>", "The room you want to check")
+	.action(({ args, options, logger }) => {
+		console.log(args.room)
+		fs.readFile(args.file, "utf8", function (err, data) {
+			if (err) {
+				return logger.warn(err);
+			} else {
+				logger.info("super".green);
+				var analyzer = new CRUParser(options.showTokenize, options.showSymbols);
+				analyzer.parse(data);
+
+				if (analyzer.errorCount === 0) {
+					let max = 0;
+					analyzer.parsedTimeslot.forEach((ts) => {
+						if(ts.room == args.room){
+							if(ts.capacity > max){
+								max = ts.capacity;
+							}
+						}
+					})
+					if(max > 0){
+						return logger.info(("La salle " + args.room + " à une capacité maximum de " +max).green);
+					}else{
+						return logger.warn("salle inexistante".red);
+					}
+				} else {
+					logger.info("The .cru file contains error".red);
+				}
+				logger.info(data);
+			}
+		});
+	})
 	// check available rooms || SPEC4
 cli.command('searchAV', 'Search available rooms for a specific day and time')
 	.argument('<file>', 'The CRU file to search')
@@ -114,6 +150,11 @@ cli.command('searchAV', 'Search available rooms for a specific day and time')
 	.option('-s, --timeS <timeS>', 'The start time of available rooms')
 	.option('-e, --timeE <timeE>', 'The end time of available rooms')
 	.action(({ args, options, logger }) => {
+		// Check if required options are provided
+		if (!options.day || !options.timeS || !options.timeE) {
+			logger.error('Error: The options -d, -s, and -e are required for the searchAV command.');
+			return;
+		}
 		fs.readFile(args.file, 'utf8', function (err, data) {
 			if (err) {
 				return logger.warn(err);
