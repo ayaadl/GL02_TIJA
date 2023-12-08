@@ -270,8 +270,9 @@ cli.command('searchAV', 'Search available rooms for a specific day and time')
 
 	// export || SPEC5
 	.command('export', 'Export an iCalendar file between two given dates for a specific teaching')
-	.argument('<startDate>', 'The first date')
-	.argument('<endDate>', 'The first date')
+	.argument ('<file>', 'The file to check with CRU parser')
+	//.argument('<startDate>', 'The first date')
+	//.argument('<endDate>', 'The first date')
 	.action(({args, options, logger}) => {
 		fs.readFile(args.file, 'utf8', function (err,data) {
 			if (err) {
@@ -282,7 +283,95 @@ cli.command('searchAV', 'Search available rooms for a specific day and time')
 			analyzer.parse(data);
 
 			if(analyzer.errorCount === 0){
-				//TODO
+				//TODO filtrer les datas en fonction des besoins
+				/* Filtrer les timeslots en fonction des dates de début et de fin
+                const filteredTimeslots = timeslots.filter(timeslot => {
+                    const timeslotStartDate = new Date(timeslot.schedule.day + ' ' + timeslot.schedule.start);
+                    const timeslotEndDate = new Date(timeslot.schedule.day + ' ' + timeslot.schedule.end);
+
+                    return timeslotStartDate >= startDate && timeslotEndDate <= endDate;
+                });*/
+
+				let calendar = new ICAL.Component(['vcalendar', [], []]);
+				analyzer.parsedCourse.forEach((course) => {
+					course.getTimeslots().forEach((timeslot) => {
+						let event = new ICAL.Component('vevent');
+
+						let startDate = new ICAL.Time({
+							year: 2023,
+							month: 9,
+							day: 1,
+							hour: parseInt(timeslot.getSchedule().getStartTime().split(':')[0]),
+							minute: parseInt(timeslot.getSchedule().getStartTime().split(':')[1]),
+						});
+
+						let endDate = new ICAL.Time({
+							year: 2023,
+							month: 9,
+							day: 1,
+							hour: parseInt(timeslot.getSchedule().getEndTime().split(':')[0]),
+							minute: parseInt(timeslot.getSchedule().getEndTime().split(':')[1]),
+						});
+
+						let day = timeslot.getSchedule().getDay();
+						switch (day) {
+							case "L":
+								day = 2;
+								break;
+							case "MA":
+								day = 3;
+								break;
+							case "ME":
+								day = 4;
+								break;
+							case "J":
+								day = 5;
+								break;
+							case "V":
+								day = 6;
+								break;
+							case "S":
+								day = 7;
+								break;
+							case "D":
+								day = 1;
+								break;
+							default:
+								day = "undefined"
+						}
+
+						let begin = new ICAL.Time({
+							year: 2023,
+							month: 9,
+							day: 1,
+						});
+						let finish = new ICAL.Time({
+							year: 2024,
+							month: 6,
+							day: 31,
+						});
+
+						let recurrenceRule = new ICAL.Recur({
+							freq: 'WEEKLY',
+							byday: day,
+							wkst: day,
+							until: finish,
+							dtstart: begin,
+						});
+
+						event.addPropertyWithValue('dtstart', startDate);
+						event.addPropertyWithValue('dtend', endDate);
+						event.addPropertyWithValue('rrule', recurrenceRule);
+						event.addPropertyWithValue('summary', course.getCode());
+						event.addPropertyWithValue('location', timeslot.getRoomName());
+
+						calendar.addSubcomponent(event);
+					});
+				});
+				let icalData = calendar.toString();
+				fs.writeFileSync('exported_calendar.ics', icalData, 'utf8');
+				logger.info('"iCalendar output : ./exported_calendar.ics"');
+
 
 			}else{
 				logger.info("The .cru file contains error".red);
