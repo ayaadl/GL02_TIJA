@@ -126,6 +126,7 @@ cli
   
 		  if (analyzer.errorCount === 0) {
 			  let max = 0;
+			  //find the biggest capacity
 			analyzer.parsedTimeslot.forEach((ts) => {
 			  if(ts.room == args.room){
 				  if(ts.capacity > max){
@@ -160,11 +161,11 @@ cli
   
           if (analyzer.errorCount === 0) {
             const days = ["L","MA","ME","J","V","S","D"]
-
+			//get timeslots for the given room
             let dayTimeSlots = analyzer.parsedTimeslot.filter((ts) => {
                 return ts.room == args.room
             })
-
+			//sort timeslots by time
             dayTimeSlots = dayTimeSlots.sort((ts1,ts2) => {
 				let schedule1 = ts1.schedule;
 				let schedule2 = ts2.schedule;
@@ -184,6 +185,7 @@ cli
             })
 
             console.log(dayTimeSlots)
+			//create the timeslots for everyday around the taken slots
 			let resSlots = []
 			days.forEach((jour) => {
 				let timeslotsJour = dayTimeSlots.filter((ts) => {
