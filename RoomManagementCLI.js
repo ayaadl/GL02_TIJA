@@ -6,6 +6,7 @@ const vegalite = require('vega-lite');
 const Timeslot = require('./Timeslot.js');
 const Schedule = require('./Schedule.js');
 const cli = require("@caporal/core").default;
+const ICAL = require('ical.js');
 
 
 cli
