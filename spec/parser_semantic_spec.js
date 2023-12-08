@@ -1,6 +1,7 @@
 const Course = require('../Course');
 const Timeslot = require('../Timeslot');
 const Schedule = require('../Schedule');
+const { compare } = require('vega');
 
 describe("Program Semantic testing of Schedule, Timeslot, Course", function(){
 	
@@ -42,7 +43,7 @@ describe("Program Semantic testing of Schedule, Timeslot, Course", function(){
 		
 	});
 
-	it("can calcualte average ranking", function(){
+	it("can add a timeslot to a course", function(){
 		
 		// toEqual is === on complex values - deepEquality
 		const tempTimeslot = new Timeslot("1,C1", "62", new Schedule("V","10:00","12:00"),"F1","B101")
@@ -64,6 +65,18 @@ describe("Program Semantic testing of Schedule, Timeslot, Course", function(){
 		  
 		]}));
 
+		
+	})
+
+	it("compare 2 schedule", function(){
+		
+		const tempTimeslot = new Timeslot("1,C1", "62", new Schedule("L","16:00","18:00"),"F1","B101")
+		// toEqual is === on complex values - deepEquality
+		let timeslots = [tempTimeslot,this.t]
+		timeslots.sort((ts1,ts2) => {
+			return ts1.compareSchedule(ts2)
+		})
+		expect(timeslots[0]).toEqual(jasmine.objectContaining(this.t));
 		
 	});
 
