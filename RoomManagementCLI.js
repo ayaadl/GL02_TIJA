@@ -4,6 +4,8 @@ const colors = require('colors');
 const CRUParser = require('./CRUParser.js');
 const vg = require('vega');
 const vegalite = require('vega-lite');
+const Timeslot = require('./Timeslot.js');
+const Schedule = require('./Schedule.js');
 const cli = require("@caporal/core").default;
 
 
@@ -108,6 +110,107 @@ cli
 		
 		});
 	})
+	//SPEC 2
+	.command("getMaximumCapacityRoom", "Display the maximum capacity of a room")
+	.alias("getMaxCapRoom")
+	.argument("<file>", "The Cru file to use")
+	.argument("<room>", "The room you want to check")
+	.action(({ args, options, logger }) => {
+	  console.log(args.room)
+	  fs.readFile(args.file, "utf8", function (err, data) {
+		if (err) {
+		  return logger.warn(err);
+		} else {
+		  logger.info("super".green);
+		  var analyzer = new CRUParser(options.showTokenize, options.showSymbols);
+		  analyzer.parse(data);
+  
+		  if (analyzer.errorCount === 0) {
+			  let max = 0;
+			  //find the biggest capacity
+			analyzer.parsedTimeslot.forEach((ts) => {
+			  if(ts.room == args.room){
+				  if(ts.capacity > max){
+					  max = ts.capacity;
+				  }
+			  }
+			})
+			if(max > 0){
+			  return logger.info(("La salle " + args.room + " à une capacité maximum de " +max).green);
+			}else{
+			  return logger.warn("salle inexistante".red);
+			}
+		  } else {
+			logger.info("The .cru file contains error".red);
+		  }
+		  logger.info(data);
+		}
+	  });
+	})
+
+	.command("searchFreeSlot", "Display the slots available for a room")
+    .alias("searchFS")
+    .argument("<file>", "The Cru file to use")
+    .argument("<room>", "The romm you want to check")
+    .action(({ args, options, logger }) => {
+      fs.readFile(args.file, "utf8", function (err, data) {
+        if (err) {
+          return logger.warn(err);
+        } else {
+          var analyzer = new CRUParser(options.showTokenize, options.showSymbols);
+          analyzer.parse(data);
+  
+          if (analyzer.errorCount === 0) {
+            const days = ["L","MA","ME","J","V","S","D"]
+			//get timeslots for the given room
+            let dayTimeSlots = analyzer.parsedTimeslot.filter((ts) => {
+                return ts.room == args.room
+            })
+			//sort timeslots by time
+            .sort((ts1,ts2) => {
+				return ts1.compareSchedule(ts2);
+                
+            })
+
+            console.log(dayTimeSlots)
+			//create the timeslots for everyday around the taken slots
+			let resSlots = []
+			days.forEach((jour) => {
+				let timeslotsJour = dayTimeSlots.filter((ts) => {
+					return ts.schedule.day == jour
+				})
+				if(timeslotsJour.length == 0){
+					resSlots.push(new Timeslot("C1",10,new Schedule(jour,"08:00","20:00"),"F1",args.room))
+				}else{
+					if(timeslotsJour[0].schedule.start > "08:00"){
+						resSlots.push(new Timeslot("C1",10,new Schedule(jour,"08:00",timeslotsJour[0].schedule.start),"F1",args.room))
+					}
+
+					timeslotsJour.forEach((ts,index) => {
+						if(index < timeslotsJour.length-1){
+							if(ts.schedule.end < timeslotsJour[index+1].schedule.start){
+								resSlots.push(new Timeslot("C1",10,new Schedule(jour,ts.schedule.end,timeslotsJour[index+1].schedule.start),"F1",args.room))
+
+							}
+						}
+					})
+
+					if(timeslotsJour[timeslotsJour.length -1].schedule.end < "20:00"){
+						resSlots.push(new Timeslot("C1",10,new Schedule(jour,timeslotsJour[timeslotsJour.length -1].schedule.end,"20:00"),"F1",args.room))
+					}
+				}
+
+			})
+
+			console.log(JSON.stringify(resSlots))
+			return logger.info(`The room ${args.room} is free on these timselots : \n ${resSlots.join(' \n ')}`.yellow);
+          } else {
+            logger.info("The .cru file contains error".red);
+          }
+          logger.info(data);
+        }
+      });
+    })
 
 	// export || SPEC5 
 	.command('export', 'Export an iCalendar file between two given dates for a specific teaching')

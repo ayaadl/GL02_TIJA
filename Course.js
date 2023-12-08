@@ -18,12 +18,14 @@ Course.prototype.create = function(){
 	//TODO
 };
 
-Course.prototype.add = function(){
-	//TODO
+Course.prototype.add = function(timeslot){
+	this.timeslots.push(timeslot)
 };
 
-Course.prototype.remove = function(){
-	//TODO
+Course.prototype.remove = function(timeslot){
+	this.timeslots = this.timeslots.filet((ts) => {
+		return ts != timeslot;
+	})
 };
 
 Course.prototype.member = function(){

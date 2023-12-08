@@ -34,8 +34,8 @@ Timeslot.prototype.equals= function(){
 	//TODO en checkant avec le CDC 
 };
 
-Timeslot.prototype.compareSchedule= function(){
-	//TODO en checkant avec le CDC 
+Timeslot.prototype.compareSchedule= function(timeslot){
+	return this.schedule.compare(timeslot.schedule)
 };
 
 module.exports = Timeslot;
