@@ -237,6 +237,13 @@ cli.command('searchAV', 'Search available rooms for a specific day and time')
 			logger.error('Error: The options -d, -s, and -e are required for the searchAV command.');
 			return;
 		}
+
+		// Validate that start time is smaller than end time
+		if (options.timeS >= options.timeE) {
+			logger.error('Error: The start time must be smaller than the end time.');
+			return;
+		}
+
 		fs.readFile(args.file, 'utf8', function (err, data) {
 			if (err) {
 				return logger.warn(err);
@@ -246,7 +253,7 @@ cli.command('searchAV', 'Search available rooms for a specific day and time')
 			analyzer.parse(data);
 
 			if (analyzer.errorCount === 0) {
-				const availableRooms = analyzer.searchAvailableRooms(analyzer.parsedSchedule, options.day, options.timeS,options.timeE);
+				const availableRooms = analyzer.searchAvailableRooms(analyzer.parsedSchedule, options.day, options.timeS, options.timeE);
 
 				if (availableRooms.length > 0) {
 					logger.info(`The available rooms on ${options.day} ${options.timeS} ${options.timeE} are: ${availableRooms.join(', ')}`);
@@ -258,6 +265,7 @@ cli.command('searchAV', 'Search available rooms for a specific day and time')
 			}
 		});
 	})
+
 
 	// export || SPEC5
 	.command('export', 'Export an iCalendar file between two given dates for a specific teaching')
