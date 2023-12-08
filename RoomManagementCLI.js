@@ -212,6 +212,48 @@ cli
       });
     })
 
+// check available rooms || SPEC4
+cli.command('searchAV', 'Search available rooms for a specific day and time')
+.argument('<file>', 'The CRU file to search')
+.option('-d, --day <day>', 'The day of available rooms')
+.option('-s, --timeS <timeS>', 'The start time of available rooms')
+.option('-e, --timeE <timeE>', 'The end time of available rooms')
+.action(({ args, options, logger }) => {
+	// Check if required options are provided
+	if (!options.day || !options.timeS || !options.timeE) {
+		logger.error('Error: The options -d, -s, and -e are required for the searchAV command.');
+		return;
+	}
+
+	// Validate that start time is smaller than end time
+	if (options.timeS >= options.timeE) {
+		logger.error('Error: The start time must be smaller than the end time.');
+		return;
+	}
+
+	fs.readFile(args.file, 'utf8', function (err, data) {
+		if (err) {
+			return logger.warn(err);
+		}
+
+		const analyzer = new CRUParser();
+		analyzer.parse(data);
+
+		if (analyzer.errorCount === 0) {
+			const availableRooms = analyzer.searchAvailableRooms(analyzer.parsedSchedule, options.day, options.timeS, options.timeE);
+
+			if (availableRooms.length > 0) {
+				logger.info(`The available rooms on ${options.day} ${options.timeS} ${options.timeE} are: ${availableRooms.join(', ')}`);
+			} else {
+				logger.info(`No available rooms on ${options.day} ${options.timeS} ${options.timeE}.`);
+			}
+		} else {
+			logger.info("The .cru file contains errors".red);
+		}
+	});
+})
+
+
 	// export || SPEC5 
 	.command('export', 'Export an iCalendar file between two given dates for a specific teaching')
 	.argument ('<file>', 'The file to check with CRU parser')
